@@ -3,19 +3,16 @@ import model.Aluno;
 import repository.AlunoDao;
 import utils.JPAUtil;
 
-import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Scanner;
-import java.util.Date;
 import java.util.UUID;
 
 public class Main {
 
-    private static EntityManager em;
     private static AlunoDao alunoDao;
 
     public static void main(String[] args) {
-        em = JPAUtil.getEntityManager();
+        EntityManager em = JPAUtil.getEntityManager();
         alunoDao = new AlunoDao(em);
         Scanner scanner = new Scanner(System.in);
         int opcao = 0;
@@ -46,12 +43,15 @@ public class Main {
                     listarAlunosAprovados();
                     break;
                 case 6:
+                    listarTodosAlunos();
+                    break;
+                case 7:
                     System.out.println("Encerrando o sistema.");
                     break;
                 default:
                     System.out.println("Opção inválida! Tente novamente.");
             }
-        } while (opcao != 6);
+        } while (opcao != 7);
 
         em.close();
         scanner.close();
@@ -64,7 +64,8 @@ public class Main {
         System.out.println("3 - Alterar aluno");
         System.out.println("4 - Buscar aluno pelo nome");
         System.out.println("5 - Listar alunos aprovados");
-        System.out.println("6 - Fim");
+        System.out.println("6 - Listar todos os alunos");
+        System.out.println("7 - Fim");
         System.out.print("Digite a opção desejada: ");
     }
 
@@ -74,11 +75,11 @@ public class Main {
             System.out.print("Digite o nome: ");
             String nome = scanner.nextLine();
 
-            System.out.print("Digite o CPF: ");
-            String cpf = scanner.nextLine();
+            System.out.print("Digite o RA: ");
+            String ra = scanner.nextLine();
 
-            System.out.print("Digite a data de nascimento (dd/MM/yyyy): ");
-            String dataNascimento = scanner.nextLine();
+            System.out.print("Digite o email: ");
+            String email = scanner.nextLine();
 
             System.out.print("Digite a nota 1: ");
             double nota1 = Double.parseDouble(scanner.nextLine());
@@ -89,62 +90,48 @@ public class Main {
             System.out.print("Digite a nota 3: ");
             double nota3 = Double.parseDouble(scanner.nextLine());
 
-            Aluno aluno = new Aluno(nome, cpf);
-            aluno.setDataNascimento(dataNascimento);
+            Aluno aluno = new Aluno(nome, ra, email);
             aluno.setNota1(nota1);
             aluno.setNota2(nota2);
             aluno.setNota3(nota3);
-            // Exemplo: definir o aluno como aprovado se a média for maior ou igual a 7.0
-            double media = (nota1 + nota2 + nota3) / 3.0;
-            aluno.setAprovado(media >= 7.0);
 
-            em.getTransaction().begin();
+            double media = (nota1 + nota2 + nota3) / 3.0;
+            aluno.setAprovado(media >= 6.0);
+
             alunoDao.cadastrar(aluno);
-            em.getTransaction().commit();
             System.out.println("Aluno cadastrado com sucesso!");
         } catch (Exception e) {
-            if (em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
-            }
             System.out.println("Erro ao cadastrar aluno: " + e.getMessage());
         }
     }
 
     private static void excluirAluno(Scanner scanner) {
         try {
-            System.out.print("\nDigite o ID do aluno a ser excluído: ");
-            String idStr = scanner.nextLine();
-            UUID id = UUID.fromString(idStr);
-
-            em.getTransaction().begin();
-            Aluno aluno = alunoDao.buscarPorId(id);
-            if (aluno != null) {
+            Aluno a = buscarAlunoPorSelecao(scanner);
+            if (a != null) {
+                Aluno aluno = alunoDao.buscarPorId(a.getUuid());
                 alunoDao.remover(aluno);
-                em.getTransaction().commit();
                 System.out.println("Aluno removido com sucesso.");
             } else {
-                em.getTransaction().rollback();
                 System.out.println("Aluno não encontrado.");
             }
         } catch (Exception e) {
-            if (em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
-            }
             System.out.println("Erro ao remover aluno: " + e.getMessage());
         }
     }
 
     private static void alterarAluno(Scanner scanner) {
         try {
-            System.out.print("\nDigite o ID do aluno a ser alterado: ");
-            String idStr = scanner.nextLine();
-            UUID id = UUID.fromString(idStr);
+            Aluno a  = buscarAlunoPorSelecao(scanner);
+            if (a == null) {
+                System.out.println("Aluno não encontrado.");
+                return;
+            }
 
-            em.getTransaction().begin();
-            Aluno aluno = alunoDao.buscarPorId(id);
+            Aluno aluno = alunoDao.buscarPorId(a.getUuid());
+
             if (aluno == null) {
                 System.out.println("Aluno não encontrado.");
-                em.getTransaction().rollback();
                 return;
             }
 
@@ -154,16 +141,16 @@ public class Main {
                 aluno.setNome(novoNome);
             }
 
-            System.out.print("Digite o novo CPF (deixe em branco para manter): ");
-            String novoCpf = scanner.nextLine();
-            if (!novoCpf.trim().isEmpty()) {
-                aluno.setCpf(novoCpf);
+            System.out.print("Digite o novo RA (deixe em branco para manter): ");
+            String novoRa = scanner.nextLine();
+            if (!novoRa.trim().isEmpty()) {
+                aluno.setRa(novoRa);
             }
 
-            System.out.print("Digite a nova data de nascimento (dd/MM/yyyy) (deixe em branco para manter): ");
-            String novaDataNascimento = scanner.nextLine();
-            if (!novaDataNascimento.trim().isEmpty()) {
-                aluno.setDataNascimento(novaDataNascimento);
+            System.out.print("Digite o novo email (deixe em branco para manter): ");
+            String novoEmail = scanner.nextLine();
+            if (!novoEmail.trim().isEmpty()) {
+                aluno.setEmail(novoEmail);
             }
 
             System.out.print("Digite a nova nota 1 (deixe em branco para manter): ");
@@ -187,20 +174,15 @@ public class Main {
                 aluno.setNota3(nota3);
             }
 
-            // Atualiza o status de aprovação com base nas notas
             double nota1 = aluno.getNota1();
             double nota2 = aluno.getNota2();
             double nota3 = aluno.getNota3();
             double media = (nota1 + nota2 + nota3) / 3.0;
-            aluno.setAprovado(media >= 7.0);
+            aluno.setAprovado(media >= 6.0);
 
             alunoDao.atualizar(aluno);
-            em.getTransaction().commit();
             System.out.println("Aluno alterado com sucesso.");
         } catch (Exception e) {
-            if (em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
-            }
             System.out.println("Erro ao alterar aluno: " + e.getMessage());
         }
     }
@@ -209,20 +191,11 @@ public class Main {
         try {
             System.out.print("\nDigite o nome ou parte do nome do aluno: ");
             String nome = scanner.nextLine();
-            // É necessário que o AlunoDao tenha um método "buscarPorNome" que retorne uma lista de alunos.
             List<Aluno> alunos = alunoDao.buscarPorNome(nome);
             if (alunos.isEmpty()) {
                 System.out.println("Nenhum aluno encontrado com esse nome.");
             } else {
-                // Exibe os resultados em formato de tabela
-                System.out.println("\n------------------------------------------------------------");
-                System.out.printf("| %-36s | %-20s | %-11s |\n", "ID", "Nome", "CPF");
-                System.out.println("------------------------------------------------------------");
-                for (Aluno a : alunos) {
-                    System.out.printf("| %-36s | %-20s | %-11s |\n",
-                            a.getUuid(), a.getNome(), a.getCpf().getValue());
-                }
-                System.out.println("------------------------------------------------------------");
+                printAlunosTable(alunos);
             }
         } catch (Exception e) {
             System.out.println("Erro ao buscar aluno: " + e.getMessage());
@@ -235,17 +208,154 @@ public class Main {
             if (alunosAprovados.isEmpty()) {
                 System.out.println("Nenhum aluno aprovado encontrado.");
             } else {
-                System.out.println("\n------------------------------------------------------------");
-                System.out.printf("| %-36s | %-20s | %-11s |\n", "ID", "Nome", "CPF");
-                System.out.println("------------------------------------------------------------");
-                for (Aluno a : alunosAprovados) {
-                    System.out.printf("| %-36s | %-20s | %-11s |\n",
-                            a.getUuid(), a.getNome(), a.getCpf().getValue());
-                }
-                System.out.println("------------------------------------------------------------");
+                printAlunosTable(alunosAprovados);
             }
         } catch (Exception e) {
             System.out.println("Erro ao listar alunos aprovados: " + e.getMessage());
         }
     }
+
+    private static void listarTodosAlunos() {
+        try {
+            List<Aluno> alunos = alunoDao.listarAlunos();
+            if (alunos.isEmpty()) {
+                System.out.println("Nenhum aluno encontrado.");
+            } else {
+                printAlunosTable(alunos);
+            }
+        } catch (Exception e) {
+            System.out.println("Erro ao listar todos os alunos: " + e.getMessage());
+        }
+    }
+
+    private static Aluno buscarAlunoPorSelecao(Scanner scanner) {
+        UUID idSelecionado = selecionarAlunoPorIndice(scanner);
+        if (idSelecionado != null) {
+            return alunoDao.buscarPorId(idSelecionado);
+        }
+        return null;
+    }
+
+    private static UUID selecionarAlunoPorIndice(Scanner scanner) {
+        List<Aluno> alunos = alunoDao.listarAlunos();
+        if (alunos.isEmpty()) {
+            System.out.println("Nenhum aluno encontrado.");
+            return null;
+        }
+
+        printAlunosTable(alunos, true);
+
+        System.out.print("Digite o número do aluno desejado: ");
+        try {
+            int indice = Integer.parseInt(scanner.nextLine());
+            if (indice < 0 || indice >= alunos.size()) {
+                System.out.println("Índice inválido.");
+                return null;
+            }
+            return alunos.get(indice).getUuid();
+        } catch (NumberFormatException e) {
+            System.out.println("Entrada inválida.");
+            return null;
+        }
+    }
+
+    private static void printAlunosTable(List<Aluno> alunos) {
+        printAlunosTable(alunos, false);
+    }
+
+    private static void printAlunosTable(List<Aluno> alunos, boolean exibirIndice) {
+        int indiceWidth = "Índice".length();
+        int idWidth = "ID".length();
+        int nomeWidth = "Nome".length();
+        int raWidth = "RA".length();
+        int emailWidth = "Email".length();
+        int nota1Width = "Nota1".length();
+        int nota2Width = "Nota2".length();
+        int nota3Width = "Nota3".length();
+
+        for (int i = 0; i < alunos.size(); i++) {
+            Aluno a = alunos.get(i);
+            if (exibirIndice) {
+                String indiceStr = String.valueOf(i);
+                if (indiceStr.length() > indiceWidth) {
+                    indiceWidth = indiceStr.length();
+                }
+            }
+            String idStr = a.getUuid().toString();
+            String nomeStr = a.getNome().toString();
+            String raStr = a.getRa();
+            String emailStr = a.getEmail();
+            String nota1Str = String.valueOf(a.getNota1());
+            String nota2Str = String.valueOf(a.getNota2());
+            String nota3Str = String.valueOf(a.getNota3());
+
+            if (idStr.length() > idWidth) idWidth = idStr.length();
+            if (nomeStr.length() > nomeWidth) nomeWidth = nomeStr.length();
+            if (raStr.length() > raWidth) raWidth = raStr.length();
+            if (emailStr.length() > emailWidth) emailWidth = emailStr.length();
+            if (nota1Str.length() > nota1Width) nota1Width = nota1Str.length();
+            if (nota2Str.length() > nota2Width) nota2Width = nota2Str.length();
+            if (nota3Str.length() > nota3Width) nota3Width = nota3Str.length();
+        }
+
+        String format;
+        String separator;
+
+        if (exibirIndice) {
+            format = "| %-" + indiceWidth + "s | %-" + idWidth + "s | %-" + nomeWidth + "s | %-" + raWidth + "s | %-" + emailWidth + "s | %-" + nota1Width + "s | %-" + nota2Width + "s | %-" + nota3Width + "s |\n";
+            separator = "+"
+                    + "-".repeat(indiceWidth + 2) + "+"
+                    + "-".repeat(idWidth + 2) + "+"
+                    + "-".repeat(nomeWidth + 2) + "+"
+                    + "-".repeat(raWidth + 2) + "+"
+                    + "-".repeat(emailWidth + 2) + "+"
+                    + "-".repeat(nota1Width + 2) + "+"
+                    + "-".repeat(nota2Width + 2) + "+"
+                    + "-".repeat(nota3Width + 2) + "+";
+        } else {
+            format = "| %-" + idWidth + "s | %-" + nomeWidth + "s | %-" + raWidth + "s | %-" + emailWidth + "s | %-" + nota1Width + "s | %-" + nota2Width + "s | %-" + nota3Width + "s |\n";
+            separator = "+"
+                    + "-".repeat(idWidth + 2) + "+"
+                    + "-".repeat(nomeWidth + 2) + "+"
+                    + "-".repeat(raWidth + 2) + "+"
+                    + "-".repeat(emailWidth + 2) + "+"
+                    + "-".repeat(nota1Width + 2) + "+"
+                    + "-".repeat(nota2Width + 2) + "+"
+                    + "-".repeat(nota3Width + 2) + "+";
+        }
+
+        System.out.println(separator);
+        if (exibirIndice) {
+            System.out.printf(format, "Número", "ID", "Nome", "RA", "Email", "Nota1", "Nota2", "Nota3");
+        } else {
+            System.out.printf(format, "ID", "Nome", "RA", "Email", "Nota1", "Nota2", "Nota3");
+        }
+        System.out.println(separator);
+
+        for (int i = 0; i < alunos.size(); i++) {
+            Aluno a = alunos.get(i);
+            if (exibirIndice) {
+                System.out.printf(format,
+                        i,
+                        a.getUuid().toString(),
+                        a.getNome().toString(),
+                        a.getRa(),
+                        a.getEmail(),
+                        a.getNota1(),
+                        a.getNota2(),
+                        a.getNota3());
+            } else {
+                System.out.printf(format,
+                        a.getUuid().toString(),
+                        a.getNome().toString(),
+                        a.getRa(),
+                        a.getEmail(),
+                        a.getNota1(),
+                        a.getNota2(),
+                        a.getNota3());
+            }
+        }
+        System.out.println(separator);
+    }
+
 }

@@ -1,10 +1,7 @@
 package model;
 
 import jakarta.persistence.*;
-import valueobject.Cpf;
-import valueobject.DataNascimento;
 import valueobject.Nome;
-
 import java.util.UUID;
 
 @Entity
@@ -18,24 +15,39 @@ public class Aluno {
     @Embedded
     private Nome nome;
 
-    @Embedded
-    @AttributeOverride(name = "CPF", column = @Column(name = "cpf", unique = true))
-    private Cpf cpf;
+    @Column(name = "ra", unique = true, nullable = false)
+    private String ra;
 
-    @Embedded
-    private DataNascimento dataNascimento;
+    @Column(name = "email", unique = true, nullable = false)
+    private String email;
 
-    @ManyToOne
-    @JoinColumn(name = "disciplina_id")
-    private Disciplina disciplina;
+    @Column(name = "nota1")
+    private double nota1;
 
+    @Column(name = "nota2")
+    private double nota2;
+
+    @Column(name = "nota3")
+    private double nota3;
+
+    @Column(name = "aprovado")
     private boolean aprovado;
 
-    public Aluno() {}
+    public boolean isAprovado() {
+        return aprovado;
+    }
 
-    public Aluno(String nome, String cpf) {
+    public void setAprovado(boolean aprovado) {
+        this.aprovado = aprovado;
+    }
+
+    public Aluno() {
+    }
+
+    public Aluno(String nome, String ra, String email) {
         this.nome = new Nome(nome);
-        this.cpf = new Cpf(cpf);
+        this.ra = ra;
+        this.email = email;
     }
 
     public UUID getUuid() {
@@ -50,46 +62,56 @@ public class Aluno {
         this.nome = new Nome(nome);
     }
 
-    public Cpf getCpf() {
-        return cpf;
+    public String getRa() {
+        return ra;
     }
 
-    public void setCpf(String cpf) {
-        this.cpf = new Cpf(cpf);
+    public void setRa(String ra) {
+        this.ra = ra;
     }
 
-    public DataNascimento getDataNascimento() {
-        return dataNascimento;
+    public String getEmail() {
+        return email;
     }
 
-    public void setDataNascimento(String dataNascimento) {
-        this.dataNascimento = new DataNascimento(dataNascimento);
+    public void setEmail(String email) {
+        this.email = email;
     }
 
-    public Disciplina getDisciplina() {
-        return disciplina;
+    public double getNota1() {
+        return nota1;
     }
 
-    public void setDisciplina(Disciplina disciplina) {
-        this.disciplina = disciplina;
+    public void setNota1(double nota1) {
+        this.nota1 = nota1;
     }
 
-    public boolean isAprovado() {
-        return aprovado;
+    public double getNota2() {
+        return nota2;
     }
 
-    public void setAprovado(boolean aprovado) {
-        this.aprovado = aprovado;
+    public void setNota2(double nota2) {
+        this.nota2 = nota2;
+    }
+
+    public double getNota3() {
+        return nota3;
+    }
+
+    public void setNota3(double nota3) {
+        this.nota3 = nota3;
     }
 
     @Override
     public String toString() {
         return "Aluno{" +
-                "\n\tuuid=" + uuid.toString() +
-                ",\n\tnome=" + nome.toString() +
-                ",\n\tcpf=" + cpf.toString() +
-                ",\n\tdataNascimento=" + dataNascimento.toString() +
-                ",\n\tdisciplina=" + disciplina.toString() +
+                "\n\tuuid=" + uuid +
+                ",\n\tnome=" + nome +
+                ",\n\tra='" + ra + '\'' +
+                ",\n\temail='" + email + '\'' +
+                ",\n\tnota1=" + nota1 +
+                ",\n\tnota2=" + nota2 +
+                ",\n\tnota3=" + nota3 +
                 "\n}";
     }
 }
