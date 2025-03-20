@@ -49,4 +49,15 @@ public class AlunoDao {
     public void remover(Aluno aluno) {
         PersistService.remover(this.em, aluno);
     }
+
+    public List<Aluno> buscarPorNome(String nome) {
+        try {
+            return em.createQuery("SELECT a FROM Aluno a WHERE a.nome.nome LIKE :nome", Aluno.class)
+                    .setParameter("nome", "%" + nome + "%")
+                    .getResultList();
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao buscar aluno por nome", e);
+        }
+    }
+
 }
