@@ -243,7 +243,7 @@ public class Main {
             return null;
         }
 
-        printAlunosTable(alunos);
+        printAlunosTable(alunos, true);
 
         System.out.print("Digite o número do aluno desejado: ");
         try {
@@ -260,35 +260,102 @@ public class Main {
     }
 
     private static void printAlunosTable(List<Aluno> alunos) {
+        printAlunosTable(alunos, false);
+    }
+
+    private static void printAlunosTable(List<Aluno> alunos, boolean exibirIndice) {
+        int indiceWidth = "Índice".length();
         int idWidth = "ID".length();
         int nomeWidth = "Nome".length();
         int raWidth = "RA".length();
         int emailWidth = "Email".length();
+        int nota1Width = "Nota1".length();
+        int nota2Width = "Nota2".length();
+        int nota3Width = "Nota3".length();
 
-        for (Aluno a : alunos) {
+        for (int i = 0; i < alunos.size(); i++) {
+            Aluno a = alunos.get(i);
+            if (exibirIndice) {
+                String indiceStr = String.valueOf(i);
+                if (indiceStr.length() > indiceWidth) {
+                    indiceWidth = indiceStr.length();
+                }
+            }
             String idStr = a.getUuid().toString();
             String nomeStr = a.getNome().toString();
             String raStr = a.getRa();
             String emailStr = a.getEmail();
+            String nota1Str = String.valueOf(a.getNota1());
+            String nota2Str = String.valueOf(a.getNota2());
+            String nota3Str = String.valueOf(a.getNota3());
+
             if (idStr.length() > idWidth) idWidth = idStr.length();
             if (nomeStr.length() > nomeWidth) nomeWidth = nomeStr.length();
             if (raStr.length() > raWidth) raWidth = raStr.length();
             if (emailStr.length() > emailWidth) emailWidth = emailStr.length();
+            if (nota1Str.length() > nota1Width) nota1Width = nota1Str.length();
+            if (nota2Str.length() > nota2Width) nota2Width = nota2Str.length();
+            if (nota3Str.length() > nota3Width) nota3Width = nota3Str.length();
         }
 
-        String format = "| %-" + idWidth + "s | %-" + nomeWidth + "s | %-" + raWidth + "s | %-" + emailWidth + "s |\n";
-        String separator = "+"
-                + "-".repeat(idWidth + 2) + "+"
-                + "-".repeat(nomeWidth + 2) + "+"
-                + "-".repeat(raWidth + 2) + "+"
-                + "-".repeat(emailWidth + 2) + "+";
+        String format;
+        String separator;
+
+        if (exibirIndice) {
+            format = "| %-" + indiceWidth + "s | %-" + idWidth + "s | %-" + nomeWidth + "s | %-" + raWidth + "s | %-" + emailWidth + "s | %-" + nota1Width + "s | %-" + nota2Width + "s | %-" + nota3Width + "s |\n";
+            separator = "+"
+                    + "-".repeat(indiceWidth + 2) + "+"
+                    + "-".repeat(idWidth + 2) + "+"
+                    + "-".repeat(nomeWidth + 2) + "+"
+                    + "-".repeat(raWidth + 2) + "+"
+                    + "-".repeat(emailWidth + 2) + "+"
+                    + "-".repeat(nota1Width + 2) + "+"
+                    + "-".repeat(nota2Width + 2) + "+"
+                    + "-".repeat(nota3Width + 2) + "+";
+        } else {
+            format = "| %-" + idWidth + "s | %-" + nomeWidth + "s | %-" + raWidth + "s | %-" + emailWidth + "s | %-" + nota1Width + "s | %-" + nota2Width + "s | %-" + nota3Width + "s |\n";
+            separator = "+"
+                    + "-".repeat(idWidth + 2) + "+"
+                    + "-".repeat(nomeWidth + 2) + "+"
+                    + "-".repeat(raWidth + 2) + "+"
+                    + "-".repeat(emailWidth + 2) + "+"
+                    + "-".repeat(nota1Width + 2) + "+"
+                    + "-".repeat(nota2Width + 2) + "+"
+                    + "-".repeat(nota3Width + 2) + "+";
+        }
 
         System.out.println(separator);
-        System.out.printf(format, "ID", "Nome", "RA", "Email");
+        if (exibirIndice) {
+            System.out.printf(format, "Número", "ID", "Nome", "RA", "Email", "Nota1", "Nota2", "Nota3");
+        } else {
+            System.out.printf(format, "ID", "Nome", "RA", "Email", "Nota1", "Nota2", "Nota3");
+        }
         System.out.println(separator);
-        for (Aluno a : alunos) {
-            System.out.printf(format, a.getUuid().toString(), a.getNome().toString(), a.getRa(), a.getEmail());
+
+        for (int i = 0; i < alunos.size(); i++) {
+            Aluno a = alunos.get(i);
+            if (exibirIndice) {
+                System.out.printf(format,
+                        i,
+                        a.getUuid().toString(),
+                        a.getNome().toString(),
+                        a.getRa(),
+                        a.getEmail(),
+                        a.getNota1(),
+                        a.getNota2(),
+                        a.getNota3());
+            } else {
+                System.out.printf(format,
+                        a.getUuid().toString(),
+                        a.getNome().toString(),
+                        a.getRa(),
+                        a.getEmail(),
+                        a.getNota1(),
+                        a.getNota2(),
+                        a.getNota3());
+            }
         }
         System.out.println(separator);
     }
+
 }
