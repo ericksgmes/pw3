@@ -107,12 +107,9 @@ public class Main {
 
     private static void excluirAluno(Scanner scanner) {
         try {
-            System.out.print("\nDigite o ID do aluno a ser excluído: ");
-            String idStr = scanner.nextLine();
-            UUID id = UUID.fromString(idStr);
-
-            Aluno aluno = alunoDao.buscarPorId(id);
-            if (aluno != null) {
+            Aluno a = buscarAlunoPorSelecao(scanner);
+            if (a != null) {
+                Aluno aluno = alunoDao.buscarPorId(a.getUuid());
                 alunoDao.remover(aluno);
                 System.out.println("Aluno removido com sucesso.");
             } else {
@@ -125,11 +122,14 @@ public class Main {
 
     private static void alterarAluno(Scanner scanner) {
         try {
-            System.out.print("\nDigite o ID do aluno a ser alterado: ");
-            String idStr = scanner.nextLine();
-            UUID id = UUID.fromString(idStr);
+            Aluno a  = buscarAlunoPorSelecao(scanner);
+            if (a == null) {
+                System.out.println("Aluno não encontrado.");
+                return;
+            }
 
-            Aluno aluno = alunoDao.buscarPorId(id);
+            Aluno aluno = alunoDao.buscarPorId(a.getUuid());
+
             if (aluno == null) {
                 System.out.println("Aluno não encontrado.");
                 return;
@@ -225,6 +225,37 @@ public class Main {
             }
         } catch (Exception e) {
             System.out.println("Erro ao listar todos os alunos: " + e.getMessage());
+        }
+    }
+
+    private static Aluno buscarAlunoPorSelecao(Scanner scanner) {
+        UUID idSelecionado = selecionarAlunoPorIndice(scanner);
+        if (idSelecionado != null) {
+            return alunoDao.buscarPorId(idSelecionado);
+        }
+        return null;
+    }
+
+    private static UUID selecionarAlunoPorIndice(Scanner scanner) {
+        List<Aluno> alunos = alunoDao.listarAlunos();
+        if (alunos.isEmpty()) {
+            System.out.println("Nenhum aluno encontrado.");
+            return null;
+        }
+
+        printAlunosTable(alunos);
+
+        System.out.print("Digite o número do aluno desejado: ");
+        try {
+            int indice = Integer.parseInt(scanner.nextLine());
+            if (indice < 0 || indice >= alunos.size()) {
+                System.out.println("Índice inválido.");
+                return null;
+            }
+            return alunos.get(indice).getUuid();
+        } catch (NumberFormatException e) {
+            System.out.println("Entrada inválida.");
+            return null;
         }
     }
 
